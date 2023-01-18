@@ -1,0 +1,167 @@
+---
+title: "R-M target analysis: taxonomic hierarchy"
+author: "Liam Shaw"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+  fig_width: 12
+fig_height: 8
+editor_options: 
+  chunk_output_type: console
+---
+
+
+  
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8,
+                      echo=TRUE, warning=FALSE, message=FALSE,
+                      tidy=TRUE)
+options(stringsAsFactors = FALSE)
+dataDir = "../data/" # assumes being run from 'notebooks' dir
+figureDir = "../output-figures/" # for figures
+outputDir = "../output-data/" # for output data
+
+# Pangenome component colours
+component.colours = c("#1f78b4", "#a6cee3", "#b2df8a")
+names(component.colours) = c("Core", "Non-core", "Plasmid")
+```
+
+## Libraries
+
+```{r libraries, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(formatR)
+library(ape)
+library(ggtree)
+library(ggridges)
+library(MCMCglmm)
+library(phytools)
+library(reshape2)
+library(tidyr)
+library(ggrepel)
+```
+
+
+```{r }
+K = 4
+SUBSAMPLING = 50000
+main.df <- read.csv(paste0(dataDir, K, '-merged-genome-results-levels-inclusive.csv'), header=F)
+colnames(main.df) <- c("species", "kmer_category", "genome", "section", "subsampling", "n", "rank", "score")
+main.df$section <- ordered(main.df$section, 
+                           levels=c("core", "accessory_chrom", "accessory_plas"))
+main.df$kmer_category <- ordered(main.df$kmer_category,
+                                 levels=c("Species", "Genus", "Family", "Order", "Class", "Phylum", "Kingdom", "Palindromic"))
+summary.df.all.4 <- main.df[which(main.df$subsampling==SUBSAMPLING & main.df$score!="NaN" & main.df$kmer_category!="Palindromic"),] %>% 
+  group_by(species, kmer_category, section) %>% 
+  summarise(score=mean(score),
+            rank=mean(rank))
+
+K = 5
+SUBSAMPLING = 50000
+main.df <- read.csv(paste0(dataDir, K, '-merged-genome-results-levels-inclusive.csv'), header=F)
+colnames(main.df) <- c("species", "kmer_category", "genome", "section", "subsampling", "n", "rank", "score")
+main.df$section <- ordered(main.df$section, 
+                           levels=c("core", "accessory_chrom", "accessory_plas"))
+main.df$kmer_category <- ordered(main.df$kmer_category,
+                                 levels=c("Species", "Genus", "Family", "Order", "Class", "Phylum", "Kingdom", "Palindromic"))
+summary.df.all.5 <- main.df[which(main.df$subsampling==SUBSAMPLING & main.df$score!="NaN" & main.df$kmer_category!="Palindromic"),] %>% 
+  group_by(species, kmer_category, section) %>% 
+  summarise(score=mean(score),
+            rank=mean(rank))
+
+K= 6
+SUBSAMPLING = 50000
+main.df <- read.csv(paste0(dataDir, K, '-merged-genome-results-levels-inclusive.csv'), header=F)
+colnames(main.df) <- c("species", "kmer_category", "genome", "section", "subsampling", "n", "rank", "score")
+main.df$section <- ordered(main.df$section, 
+                           levels=c("core", "accessory_chrom", "accessory_plas"),
+                           labels=c("Core", "Non-core", "Plasmid"))
+main.df$kmer_category <- ordered(main.df$kmer_category,
+                                 levels=c("Species", "Genus", "Family", "Order", "Class", "Phylum", "Kingdom", "Palindromic"))
+summary.df.all.6 <- main.df[which(main.df$subsampling==SUBSAMPLING & main.df$score!="NaN" & main.df$kmer_category!="Palindromic"),] %>% 
+  group_by(species, kmer_category, section) %>% 
+  summarise(score=mean(score),
+            rank=mean(rank))
+
+scorePlot <- function(df, panel.one=FALSE, legend.position="none"){
+  p.panel = ggplot(df[,], aes(kmer_category, score, group=interaction(section, species)))+
+    geom_hline(yintercept = 0, linetype='dashed', colour='black', size=1)+
+    geom_line(alpha=0.2, aes(colour=section), size=0.5)+
+    facet_wrap(~section, nrow=3)+ 
+    theme_bw()+
+    scale_colour_manual(values=as.character(component.colours))+
+    theme(panel.grid = element_blank(), axis.text=element_text(colour="black"))+
+    xlab("")+
+    ylab("")+
+    guides(fill="none")+
+    theme(axis.text.x=element_text(angle=45, hjust=1, size=8))+
+    theme(legend.position = "none")
+  p.all = ggplot(df[,], aes(kmer_category, score))+
+    geom_hline(yintercept = 0, linetype='dashed', colour='black', size=1)+
+    stat_smooth(aes(colour=section, group=section), size=2, alpha=0.2, se=FALSE)+
+    theme_bw()+
+    scale_colour_manual(values=as.character(component.colours))+
+    theme(panel.grid = element_blank(), axis.text=element_text(colour="black"))+
+    xlab("")+
+    ylab("Exceptionality score of targets")+
+    guides(fill="none")+
+    theme(axis.text.x=element_text(angle=45, hjust=1))+
+    theme(legend.position = "none")
+  
+  p.l = cowplot::plot_grid(p.all+ggtitle("(d)"), p.panel+ggtitle("(e)"), nrow=1, 
+                           rel_widths = c(1, 0.4),
+                           align='h', axis='b')
+  if (panel.one==TRUE){
+    return(p.all+theme(legend.position = legend.position))
+  }
+  else{
+    return(p.l)
+  }
+}
+
+
+p.scores.4 = scorePlot(summary.df.all.4)
+p.scores.5 = scorePlot(summary.df.all.5)
+p.scores.6 = scorePlot(summary.df.all.6)
+
+# Save figures
+ggsave(p.scores.4, file=paste0(figureDir, Sys.Date(), '-smoothed-component-K-4.pdf'), width=6, height=6)
+ggsave(p.scores.5, file=paste0(figureDir, Sys.Date(), '-smoothed-component-K-5.pdf'), width=6, height=6)
+ggsave(p.scores.6, file=paste0(figureDir, Sys.Date(), '-smoothed-component-K-6.pdf'), width=6, height=6)
+
+```
+
+## Score plots
+
+```{r score-plots-show}
+p.scores.4
+p.scores.5
+p.scores.6
+```
+
+```{r combined-smoothed-components}
+p.4 = scorePlot(summary.df.all.4, panel.one = TRUE)
+p.5 = scorePlot(summary.df.all.5, panel.one = TRUE)
+p.6 = scorePlot(summary.df.all.6, panel.one = TRUE, legend.position = c(0.8, 0.2))
+p.scores.combined = cowplot::plot_grid(p.4+ggtitle("(a) k=4"),
+                                       p.5+ggtitle("(b) k=5"),
+                                       p.6+ggtitle("(c) k=6")+
+                                         theme(legend.position = "none"),
+                                       nrow=1)
+p.scores.combined
+ggsave(p.scores.combined, file=paste0(figureDir, Sys.Date(), '-', SUBSAMPLING, '-smoothed-components-all.pdf'), width=7, height=2.5)
+```
+
+```{r figure2_plot}
+schematic_file <- system.file("../manuscript-figures/schematic-approach.png", package = "cowplot")
+p2 <- ggdraw() + draw_image("../manuscript-figures/schematic-approach.png", scale = 0.9)
+p.combined.figure2 = cowplot::plot_grid(p2, p.scores.6,
+                   nrow=2, 
+                   rel_heights = c(1,1.3))
+png(paste0(figureDir, Sys.Date(), '-', SUBSAMPLING, '-figure-2.png'), width=3500, height=3500, res=600)
+p.combined.figure2
+dev.off()
+ggsave(p.combined.figure2, file=paste0(figureDir, Sys.Date(), '-', SUBSAMPLING, '-figure-2.pdf'), width=7, height=8)
+```

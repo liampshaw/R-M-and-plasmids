@@ -1,0 +1,14 @@
+K	6
+Subsampling (bp)	10000
+No. of genomes	4545
+No. of species (n>=3 genomes)	54
+
+Model output
+Mean estimate	Lower (95% CI)	Upper (95%)	Effective sample size	pMCMC
+Intercept	-0.16096761628776	-0.299868744928972	-0.0467505742562935	2.97772482623905	0.111111111111111
+Category (relative to core): Non-core	0.00785905294813145	-0.0156603084578819	0.0378833128052065	9	0.666666666666667
+Category (relative to core): Plasmid-borne	-0.104892770355466	-0.129141564662859	-0.088003504628432	9	0.111111111111111
+
+Variance explained
+Non-core	Plasmid-borne	Phylogeny	No. of genomes	Residuals
+0.0273519014012859	4.87234693360135	56.9820828129565	6.23063729621573	31.8875810558251
