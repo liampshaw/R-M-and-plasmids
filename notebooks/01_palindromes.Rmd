@@ -95,13 +95,22 @@ summariseDFpalindromeCorePlasmidAccessory <- function(subsampling, K){
 
 ```{r mcmcp}
 # MCMC PARAMETERS - equivalent to effective sample N=1000
-N_ITERATIONS = 10000#1100000# 1100000
-BURNIN = 1000#100000 #
-THIN = 1000#1000#1000
+N_ITERATIONS = 1100000#1100000 #1100000# 1100000
+BURNIN = 100000#100000 #1000#100000 #
+THIN = 1000 #1000#1000#1000
 N.MIN = 2 # N-1 where N is genomes needed for inclusion in plots 
 
 # Read in tree
-zhu.tree <- read.tree(paste0(dataDir, 'zhu-tree-subset-v2.nwk'))
+species.tree <- read.tree(paste0(dataDir, '16S_species.nwk'))
+phylo <- force.ultrametric(species.tree)
+# Collapse dichotomies into multichotomy
+phylo_2 <- di2multi(phylo)
+# Add node labels
+dataTreeNode <- makeNodeLabel(phylo_2, method = "number")
+# Inverse matrix of phylogeny, for use in MCMC modelling
+inv.phylo <- inverseA(dataTreeNode)
+inv.phylogenetic.matrix <- inv.phylo$Ainv
+
 main.df.4 = readDF(4)
 main.df.6 = readDF(6)
 
@@ -118,12 +127,6 @@ runModelMakePlot <- function(subsampling_value, K){
   df = summariseDFpalindromeCoreAccessory(subsampling_value, K)
   df.plasmid = summariseDFpalindromeCorePlasmid(subsampling_value, K)
   df.plasmid.accessory = summariseDFpalindromeCorePlasmidAccessory(subsampling_value, K)
-  
-  
-  
-  
-  
-  
   
   summary.df <- main.df[which(main.df$subsampling==subsampling_value & main.df$score!="NaN" &
                                 main.df$kmer_category=="Palindromic" & 
@@ -153,20 +156,11 @@ runModelMakePlot <- function(subsampling_value, K){
   summary.df.longer = pivot_longer(summary.df, c("plasmid_score", "chrom_score", "accessory_score"))
   
   # MCMC GLMM
-  phylo <- force.ultrametric(zhu.tree)
-  # ?
-  phylo_2<- di2multi(phylo)
-  # Midpoint root (just so it has a root)
-  phylo_2 <- midpoint.root(phylo_2)
-  # Add node labels
-  dataTreeNode <- makeNodeLabel(phylo_2, method = "number")
-  
-  # Inverse matrix of phylogeny
-  inv.phylo <- inverseA(dataTreeNode)
-  inv.matrix <- inv.phylo$Ainv
-  # Prior
+ 
+  # Three random effects
   prior2 <- list(G=list(G1=list(V=1,nu=0.002), G2=list(V=1,nu=0.002))) # two random effects
-  
+  prior3 <- list(G=list(G1=list(V=1,nu=0.002), G2=list(V=1,nu=0.002), G3=list(V=1,nu=0.002))) # three random effects
+
   
   df = data.frame(summary.df.longer)
   df$name.ordered = relevel(as.factor(df$name), ref="chrom_score")
@@ -178,15 +172,31 @@ runModelMakePlot <- function(subsampling_value, K){
                                                        n=length(unique(genome))))
   summary.results.per.species$name.ordered = relevel(as.factor(summary.results.per.species$name), ref="chrom_score")
   
-  mcmc_model = MCMCglmm(value ~ name.ordered, random=~species+n, data=summary.results.per.species,pl=TRUE, slice=TRUE,
-                        nitt = N_ITERATIONS, burnin = BURNIN, 
-                        thin = THIN, prior=prior2, ginverse = list(species = inv.matrix),verbose = TRUE)
+  # mcmc_model = MCMCglmm(value ~ name.ordered, random=~species+n, data=summary.results.per.species,pl=TRUE, slice=TRUE,
+  #                       nitt = N_ITERATIONS, burnin = BURNIN, 
+  #                       thin = THIN, prior=prior2, ginverse = list(species = inv.phylogenetic.matrix),verbose = TRUE)
+  # 
+  # alternative MCMC model 29/03/23
+  summary.results.per.species$phylogeny = summary.results.per.species$species
+  
+  # mcmc_model_alt = MCMCglmm(value ~ name.ordered, random=~species+animal, data=summary.results.per.species,pl=TRUE, slice=TRUE,
+  #                       nitt = N_ITERATIONS, burnin = BURNIN, 
+  #                       thin = THIN, prior=prior2, ginverse = list(species = inv.phylogenetic.matrix),verbose = TRUE)
+    mcmc_model_complete = MCMCglmm(value ~ name.ordered, 
+                                   random=~phylogeny+species+n, 
+                                   data=summary.results.per.species,
+                                   pl=TRUE, slice=TRUE,
+                                   nitt = N_ITERATIONS, burnin = BURNIN,
+                                   thin = THIN, 
+                                   prior=prior3, 
+                                   ginverse = list(phylogeny = inv.phylogenetic.matrix),
+                                   verbose = TRUE)
   
   
   
   
   # CALCULATIONS FOR MODEL
-  model = mcmc_model
+  model = mcmc_model_complete
   
   mFixed_accessory = mean(model$Sol[,2])*model$X[,2] # first entry
   mFixed_plasmid = mean(model$Sol[,3])*model$X[,3]
@@ -370,7 +380,7 @@ runModelMakePlot <- function(subsampling_value, K){
                          mVarF_plasmid/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100,
                          mean_random_effects/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100)
   names(variance.explained) = c("Non-core", "Plasmid",
-                                "Phylogeny", "No. of genomes", "Residuals")
+                                "Phylogenetic structure", "Species-level", "No. of genomes", "Residuals")
   
   header.string = c(K, subsampling_value, N.genomes, N.species)
   names(header.string) = c("K", "Subsampling (bp)", "No. of genomes", "No. of species (n>=3 genomes)")
