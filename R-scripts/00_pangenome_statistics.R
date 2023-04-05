@@ -1,49 +1,9 @@
----
-title: "Pangenome statistics"
-author: "Liam Shaw"
-date: "`r Sys.Date()`"
-output: 
-  html_document:
-  fig_width: 12
-fig_height: 8
-editor_options: 
-  chunk_output_type: console
----
+# PANGENOME STATISTICS
   
-  
-  
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8,
-                      echo=TRUE, warning=FALSE, message=FALSE,
-                      tidy=TRUE)
-options(stringsAsFactors = FALSE)
-dataDir = "../data/" # assumes being run from 'notebooks' dir
-figureDir = "../output-figures/" # for figures
-outputDir = "../output-data/" # for output data
+source('setup.R')
 
-# Pangenome component colours
-component.colours = c("#1f78b4", "#a6cee3", "#b2df8a")
-names(component.colours) = c("Core", "Non-core", "Plasmid")
-```
-
-## Libraries
-
-```{r libraries, include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(formatR)
-library(ape)
-library(ggtree)
-library(ggridges)
-library(MCMCglmm)
-library(phytools)
-library(reshape2)
-library(tidyr)
-library(ggrepel)
-```
-
-```{r}
+ 
+# READ STATISTICS AND REARRANGE
 pangenome.stats = read.csv(paste0(dataDir, "pangenome-stats.csv"),
                 header=T,
                 stringsAsFactors=F)
@@ -59,23 +19,22 @@ pangenome.stats.melt$variable = ordered(pangenome.stats.melt$variable,
                                                                                    "mean.nonplasmid.noncoregenes.per.genome",
                                                                                    "mean.plasmid.genes.per.genome")),
                                         labels=rev(c("Core", "Non-core", "Plasmid")))
-```
 
-```{r plot-pangenome}
-ggplot(pangenome.stats.melt, aes(species, value, fill=variable))+
+# PANGENOME PLOT
+p.pangenome = ggplot(pangenome.stats.melt, aes(species, value, fill=variable))+
   geom_bar(stat="identity", position="stack")+
   theme_bw()+
   coord_flip()+
   scale_fill_manual(values=component.colours)+
   theme(panel.grid = element_blank())
-```
+saveFigure(p.pangenome, "FigureX_pangenome-plot.pdf", 
+           width=5.5, height=10)
 
 
-```{r genomes}
+
+# CONTIGS DATABASE
 contigs.db = read.csv(paste0(dataDir, "2022-11-18-contig-database.csv"), 
                       header=T,
                       stringsAsFactors = F,
                       row.names = 1)
-View(contigs.db %>% filter(contig.number>1, plasmid!=TRUE))
-  
-```
+#View(contigs.db %>% filter(contig.number>1, plasmid!=TRUE))

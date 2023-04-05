@@ -1,50 +1,8 @@
----
-title: "R-M target analysis: taxonomic hierarchy"
-author: "Liam Shaw"
-date: "`r Sys.Date()`"
-output: 
-  html_document:
-  fig_width: 12
-fig_height: 8
-editor_options: 
-  chunk_output_type: console
----
+# R-M target analysis: taxonomic hierarchy"
 
+source('setup.R')
 
-  
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8,
-                      echo=TRUE, warning=FALSE, message=FALSE,
-                      tidy=TRUE)
-options(stringsAsFactors = FALSE)
-dataDir = "../data/" # assumes being run from 'notebooks' dir
-figureDir = "../output-figures/" # for figures
-outputDir = "../output-data/" # for output data
-
-# Pangenome component colours
-component.colours = c("#1f78b4", "#a6cee3", "#b2df8a")
-names(component.colours) = c("Core", "Non-core", "Plasmid")
-```
-
-## Libraries
-
-```{r libraries, include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(formatR)
-library(ape)
-library(ggtree)
-library(ggridges)
-library(MCMCglmm)
-library(phytools)
-library(reshape2)
-library(tidyr)
-library(ggrepel)
-```
-
-
-```{r }
+# READ IN DATASETS
 K = 4
 SUBSAMPLING = 50000
 main.df <- read.csv(paste0(dataDir, K, '-merged-genome-results-levels-inclusive.csv'), header=F)
@@ -69,7 +27,8 @@ main.df$kmer_category <- ordered(main.df$kmer_category,
 summary.df.all.5 <- main.df[which(main.df$subsampling==SUBSAMPLING & main.df$score!="NaN" & main.df$kmer_category!="Palindromic"),] %>% 
   group_by(species, kmer_category, section) %>% 
   summarise(score=mean(score),
-            rank=mean(rank))
+            rank=mean(rank),
+            .groups = "drop")
 
 K= 6
 SUBSAMPLING = 50000
@@ -85,6 +44,7 @@ summary.df.all.6 <- main.df[which(main.df$subsampling==SUBSAMPLING & main.df$sco
   summarise(score=mean(score),
             rank=mean(rank))
 
+# SCORE PLOT FUNCTION
 scorePlot <- function(df, panel.one=FALSE, legend.position="none"){
   p.panel = ggplot(df[,], aes(kmer_category, score, group=interaction(section, species)))+
     geom_hline(yintercept = 0, linetype='dashed', colour='black', size=1)+
@@ -121,27 +81,19 @@ scorePlot <- function(df, panel.one=FALSE, legend.position="none"){
   }
 }
 
-
+# SCORE PLOTS, SMOOTHED COMPONENTS
 p.scores.4 = scorePlot(summary.df.all.4)
 p.scores.5 = scorePlot(summary.df.all.5)
 p.scores.6 = scorePlot(summary.df.all.6)
 
 # Save figures
-ggsave(p.scores.4, file=paste0(figureDir, Sys.Date(), '-smoothed-component-K-4.pdf'), width=6, height=6)
-ggsave(p.scores.5, file=paste0(figureDir, Sys.Date(), '-smoothed-component-K-5.pdf'), width=6, height=6)
-ggsave(p.scores.6, file=paste0(figureDir, Sys.Date(), '-smoothed-component-K-6.pdf'), width=6, height=6)
+saveFigure(p.scores.4, 'FigureS7_smoothed-component-K-4', width=6, height=6)
+saveFigure(p.scores.5, 'FigureS8_smoothed-component-K-5', width=6, height=6)
+saveFigure(p.scores.6,'Figure2de_smoothed-component-K-6', width=6, height=6)
 
-```
 
-## Score plots
 
-```{r score-plots-show}
-p.scores.4
-p.scores.5
-p.scores.6
-```
-
-```{r combined-smoothed-components}
+# COMBINE SMOOTHED COMPONENT PLOTS FOR ALL K
 p.4 = scorePlot(summary.df.all.4, panel.one = TRUE)
 p.5 = scorePlot(summary.df.all.5, panel.one = TRUE)
 p.6 = scorePlot(summary.df.all.6, panel.one = TRUE, legend.position = c(0.8, 0.2))
@@ -150,18 +102,16 @@ p.scores.combined = cowplot::plot_grid(p.4+ggtitle("(a) k=4"),
                                        p.6+ggtitle("(c) k=6")+
                                          theme(legend.position = "none"),
                                        nrow=1)
-p.scores.combined
-ggsave(p.scores.combined, file=paste0(figureDir, Sys.Date(), '-', SUBSAMPLING, '-smoothed-components-all.pdf'), width=7, height=2.5)
-```
+saveFigure(p.scores.combined,
+           'FigureX_smoothed-components-all', width=7, height=2.5)
 
-```{r figure2_plot}
+# FIGURE 2 PLOT CONSTRUCTION
 schematic_file <- system.file("../manuscript-figures/schematic-approach.png", package = "cowplot")
 p2 <- ggdraw() + draw_image("../manuscript-figures/schematic-approach.png", scale = 0.9)
 p.combined.figure2 = cowplot::plot_grid(p2, p.scores.6,
                    nrow=2, 
                    rel_heights = c(1,1.3))
-png(paste0(figureDir, Sys.Date(), '-', SUBSAMPLING, '-figure-2.png'), width=3500, height=3500, res=600)
+png(paste0(figureDir, "Figure2_k-6-subsampling-", SUBSAMPLING, "-", Sys.Date()), width=3500, height=3500, res=600)
 p.combined.figure2
 dev.off()
-ggsave(p.combined.figure2, file=paste0(figureDir, Sys.Date(), '-', SUBSAMPLING, '-figure-2.pdf'), width=7, height=8)
-```
+saveFigure(p.combined.figure2, paste0("Figure2_", "k-6-subsampling-", SUBSAMPLING), width=7, height=8)

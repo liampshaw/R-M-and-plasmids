@@ -1,61 +1,16 @@
----
-title: "Plasmid taxonomic units (PTUs)"
-author: "Liam Shaw"
-date: "`r Sys.Date()`"
-output: 
-  html_document:
-  fig_width: 12
-fig_height: 8
-editor_options: 
-  chunk_output_type: console
----
+# PLASMID TAXONOMIC UNITS
   
-  
-  
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8,
-                      echo=TRUE, warning=FALSE, message=FALSE,
-                      tidy=TRUE)
-options(stringsAsFactors = FALSE)
-dataDir = "../data/" # assumes being run from 'notebooks' dir
-figureDir = "../output-figures/" # for figures
-outputDir = "../output-data/" # for output data
+source('setup.R')
 
-# Pangenome component colours
-component.colours = c("#1f78b4", "#a6cee3", "#b2df8a")
-names(component.colours) = c("Core", "Non-core", "Plasmid")
-size.colours = c("#fee5d9","#fcae91","#fb6a4a","#cb181d")
-
-```
-
-## Libraries
-
-```{r libraries, include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(formatR)
-library(ape)
-library(ggtree)
-library(ggridges)
-library(MCMCglmm)
-library(phytools)
-library(reshape2)
-library(tidyr)
-library(ggrepel)
-library(ggbeeswarm)
-```
-
-```{r read_data}
+# READ DATA
 # Redondo Salvo database
 plasmid_db = read.csv(paste0(dataDir, 'redondo-salvo-2020-plasmid-DB.csv'),
                       header=T, 
                       stringsAsFactors = F,
                       row.names = 1)
 
-```
 
-```{r analysis}
+# ANALYSIS
 K = 4
 SUBSAMPLING = 2500
 
@@ -106,9 +61,8 @@ p.6 = ggplot(plasmid.df.6, aes(score))+
   xlab("Avoidance score")+
   theme_bw()+
   ggtitle("(b) k=6")
-```
 
-```{r plotting_functions}
+# PLOTTING FUNCTIONS
 # Try to summarise this information into a plot
 modelForPTUs <- function(SUBSAMPLING, K, KMER_CATEGORY, SPECIES="", whole.model=FALSE){
   
@@ -287,37 +241,34 @@ makePlotEffectsErrorBars <- function(SUBSAMPLING, K, YLIM=0, TITLE=""){
 }
 
 
-```
-
-```{r making_plots}
+# MAKING PLOTS
 p.6 = makePlotEffectsErrorBars("10000", 6,
                                TITLE="")
 
 
 
-ggsave(plot=p.6, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k6.pdf'), 
+saveFigure(p.6, "Figure5_PTU-modelling-size-effect-10k-k6", 
        width=10, height=4)
-ggsave(plot=p.6, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k6.png'), 
+ggsave(plot=p.6, "Figure5_PTU-modelling-size-effect-10k-k6.png", 
        width=25, height=8, unit="cm", dpi=300)
 
 p.4 = makePlotEffectsErrorBars("10000", 4,
                                TITLE="")
-ggsave(plot=p.4, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k4.pdf'), 
+saveFigure(p.4, 'FigureS9_PTU-modelling-size-effect-10k-k4', 
        width=10, height=4)
-ggsave(plot=p.4, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k4.png'), 
+ggsave(plot=p.4, file=paste0(figureDir, Sys.Date(), 'FigureS9_PTU-modelling-size-effect-10k-k4.png'), 
        width=25, height=8, unit="cm", dpi=300)
 p.5 = makePlotEffectsErrorBars("10000", 5,
                                TITLE="")
-ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k5.pdf'), 
+saveFigure(p.5, "FigureS10_PTU-modelling-size-effect-10k-k5", 
        width=10, height=4)
-ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k5.png'), 
+ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), "FigureS10_PTU-modelling-size-effect-10k-k5.png"), 
        width=25, height=8, unit="cm", dpi=300)
-#ggsave(plot=p.6, file=paste0(figureDir, Sys.Date(), '-PTU-modelling-size-effect-10k-k6.png'), 
-#       width=12, height=4, unit="cm", res=600)
-```
 
 
-```{r MTases}
+
+
+# INVESTIGATE MTASES
 MTase_hits = read.csv(paste0(dataDir, '2022-11-14-MTases-redondo-salvo-plasmids.csv'),
                       header=T, stringsAsFactors = F)
 MTase_hits$plasmid = gsub(".[0-9]_.*", "\\1\\2", MTase_hits$qseqid)
@@ -422,18 +373,18 @@ size.values = seq(1e3, 2e6, 1e3)
 
 
 
-ggplot(PTU_summary, aes(group=targets, y=targets, x=log10(size)))+
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(height=0.1, alpha=0.7)+
-  theme_bw()+
-  theme(panel.grid = element_blank())+
-  theme(axis.text=element_text(colour="black"))+
-  xlab("PTU size (log10)")+
-  ylab("Unique targets of MTases")+
-  theme(panel.border = element_blank(),
-        axis.line = element_line(colour = "black"))+
-  scale_y_continuous(breaks=seq(0,5))+
-  facet_wrap(~hostrange)
+# ggplot(PTU_summary, aes(group=targets, y=targets, x=log10(size)))+
+#   geom_boxplot(outlier.shape = NA)+
+#   geom_jitter(height=0.1, alpha=0.7)+
+#   theme_bw()+
+#   theme(panel.grid = element_blank())+
+#   theme(axis.text=element_text(colour="black"))+
+#   xlab("PTU size (log10)")+
+#   ylab("Unique targets of MTases")+
+#   theme(panel.border = element_blank(),
+#         axis.line = element_line(colour = "black"))+
+#   scale_y_continuous(breaks=seq(0,5))+
+#   facet_wrap(~hostrange)
 
 PTU_summary = PTU_summary %>%
   mutate(new_bin = cut(log10(size), 
@@ -531,14 +482,14 @@ p.norm = ggplot(PTU_summary, aes(group=hostrange, x=hostrange, y=MT.norm+0.5e-6,
 p.combined = cowplot::plot_grid(p.prop+ggtitle("(a)")+theme(legend.position = "none"), 
                                 p.norm+ggtitle("(b)")+theme(legend.position = "none"), 
                                 align='h', axis='t', nrow=2)
-ggsave(plot=p.combined, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-MTase-combined.pdf"),
+saveFigure(p.combined, "FigureS11_PTUs-MTase-combined",
        width=8, height=6)
 
-ggsave(plot=p.prop, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-host-range-density.pdf"),
-       width=6, height=4)
+#ggsave(plot=p.prop, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-host-range-density.pdf"),
+#       width=6, height=4)
 
-ggsave(plot=p.norm, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-host-range-proportion.pdf"),
-       width=6, height=4)
+#ggsave(plot=p.norm, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-host-range-proportion.pdf"),
+#       width=6, height=4)
 
 summary.df = PTU_summary %>% group_by(hostrange, new_bin) %>%
   summarise(mean=mean(MT),
@@ -569,8 +520,7 @@ p.heatmap = ggplot(summary.df, aes(PTU.hostrange, new_bin, fill=mean))+
         axis.ticks=element_blank(),
         axis.title=element_text(size=14),
         axis.text=element_text(size=12))
- ggsave(plot=p.heatmap, filename=paste0(figureDir, Sys.Date(), "-fig-MTase-heatmap.pdf"),
+ saveFigure(p.heatmap, "Figure6_MTase-heatmap.pdf",
        width=7.5, height=4)
-# Probability of having 
 
-```
+ 

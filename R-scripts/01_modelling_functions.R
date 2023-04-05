@@ -1,53 +1,6 @@
----
-title: "Palindrome analysis (k=4 and k=6)"
-author: "Liam Shaw"
-date: "`r Sys.Date()`"
-output: 
-  html_document:
-  fig_width: 12
-fig_height: 8
-editor_options: 
-  chunk_output_type: console
----
+suppressPackageStartupMessages(library(MCMCglmm))
 
-
-  
-```{r setup, include = FALSE}
-set.seed(12345)
-knitr::opts_chunk$set(fig.width=12, fig.height=8,
-                      echo=TRUE, warning=FALSE, message=FALSE,
-                      tidy=TRUE)
-options(stringsAsFactors = FALSE)
-dataDir = "../data/" # assumes being run from 'notebooks' dir
-figureDir = "../output-figures/" # for figures
-outputDir = "../output-data/" # for output data
-
-# Pangenome component colours
-component.colours = c("#1f78b4", "#a6cee3", "#b2df8a")
-names(component.colours) = c("Core", "Non-core", "Plasmid")
-```
-
-  
-## Libraries
-
-```{r libraries, include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(formatR)
-library(ape)
-library(ggtree)
-library(ggridges)
-library(MCMCglmm)
-library(phytools)
-library(reshape2)
-library(tidyr)
-library(ggrepel)
-library(ggbeeswarm)
-```
-
-```{r functions, include=FALSE}
-
+# FUNCTIONS
 readDF <- function(K){
   main.df <- read.csv(paste0(dataDir, K, '-merged-genome-results-levels-inclusive.csv'), header=F)
   colnames(main.df) <- c("species", "kmer_category", "genome", "section", "subsampling", "n", "rank", "score")
@@ -90,10 +43,8 @@ summariseDFpalindromeCorePlasmidAccessory <- function(subsampling, K){
               k=K)
   return(summary.df)
 }
-```
 
-
-```{r mcmcp}
+# MCMC MODELLING
 # MCMC PARAMETERS - equivalent to effective sample N=1000
 N_ITERATIONS = 1100000#1100000 #1100000# 1100000
 BURNIN = 100000#100000 #1000#100000 #
@@ -116,20 +67,16 @@ inv.phylogenetic.matrix <- inv.phylo$Ainv
 prior3 <- list(G=list(G1=list(V=1,nu=0.002), 
                       G2=list(V=1,nu=0.002), 
                       G3=list(V=1,nu=0.002))) 
-
+prior2 <- list(G=list(G1=list(V=1,nu=0.002), 
+                      G2=list(V=1,nu=0.002))) 
 
 # Read in k=4,6 palindrome data
 main.df.4 = readDF(4)
 main.df.6 = readDF(6)
 
-# Exclude species
-#EXCLUDE = c("Vibrio_parahaemolyticus", 
-#            "Vibrio_cholerae", 
-#            "Burkholderia_pseudomallei")
-#main.df.4 = main.df.4[which(! main.df.4$species %in% EXCLUDE),]
-#main.df.6 = main.df.6[which(! main.df.6$species %in% EXCLUDE),]
 
-runModelMakePlot <- function(subsampling_value, K){
+
+runModelMakePlot <- function(subsampling_value, K, file_prefix=""){
   main.df = get(paste0("main.df.", K))
   
   df = summariseDFpalindromeCoreAccessory(subsampling_value, K)
@@ -167,7 +114,7 @@ runModelMakePlot <- function(subsampling_value, K){
   df = data.frame(summary.df.longer)
   df$name.ordered = relevel(as.factor(df$name), ref="chrom_score")
   
- 
+  
   # Summarise at level of species
   summary.results.per.species = data.frame(df %>% group_by(species, name) %>%
                                              summarise(value=mean(value),
@@ -177,15 +124,24 @@ runModelMakePlot <- function(subsampling_value, K){
   
   summary.results.per.species$phylogeny = summary.results.per.species$species
   
+  # mcmc_model_complete = MCMCglmm(value ~ name.ordered, 
+  #                                  random=~phylogeny+species+n, 
+  #                                  data=summary.results.per.species,
+  #                                  pl=TRUE, slice=TRUE,
+  #                                  nitt = N_ITERATIONS, burnin = BURNIN,
+  #                                  thin = THIN, 
+  #                                  prior=prior3, 
+  #                                  ginverse = list(phylogeny = inv.phylogenetic.matrix),
+  #                                  verbose = TRUE)
   mcmc_model_complete = MCMCglmm(value ~ name.ordered, 
-                                   random=~phylogeny+species+n, 
-                                   data=summary.results.per.species,
-                                   pl=TRUE, slice=TRUE,
-                                   nitt = N_ITERATIONS, burnin = BURNIN,
-                                   thin = THIN, 
-                                   prior=prior3, 
-                                   ginverse = list(phylogeny = inv.phylogenetic.matrix),
-                                   verbose = TRUE)
+                                 random=~species+n, 
+                                 data=summary.results.per.species,
+                                 pl=TRUE, slice=TRUE,
+                                 nitt = N_ITERATIONS, burnin = BURNIN,
+                                 thin = THIN, 
+                                 prior=prior2, 
+                                 ginverse = list(species = inv.phylogenetic.matrix),
+                                 verbose = TRUE)
   
   # CALCULATIONS FOR MODEL
   model = mcmc_model_complete
@@ -224,7 +180,7 @@ runModelMakePlot <- function(subsampling_value, K){
   
   variance.test.results = data.frame(variance.test.results)
   variance.test.results$species = rownames(variance.test.results)
- 
+  
   variance.test.results$p.corrected = p.adjust(variance.test.results$X4)
   table(variance.test.results$p.corrected<0.05)
   
@@ -278,7 +234,7 @@ runModelMakePlot <- function(subsampling_value, K){
     theme(legend.position = "none")+
     theme(axis.title.y=element_text(size=10))
   
-
+  
   
   df.plasmid$species.name = gsub("_", " ", df.plasmid$species)
   df.plasmid.abundant.mean.se = df.plasmid %>% 
@@ -287,7 +243,7 @@ runModelMakePlot <- function(subsampling_value, K){
               se=sd(diff.score)/sqrt(length(diff.score)))
   df.plasmid.abundant.mean.se$species.name = ordered(df.plasmid.abundant.mean.se$species.name,
                                                      levels=df.plasmid.abundant.mean.se$species.name[order(df.plasmid.abundant.mean.se$mean, decreasing = TRUE)])
-
+  
   # Add modelling
   modelling.output.plasmid = summary(model)$solutions["name.orderedplasmid_score",]
   modelling.estimate = data.frame(species.name="Modelled effect",
@@ -355,8 +311,15 @@ runModelMakePlot <- function(subsampling_value, K){
                                   rel_widths = c(1, 1.5))
   
   # Save the plot
-  ggsave(plot=p.combined, file=paste0(figureDir, Sys.Date(), "-figure-1-k", K, "-subsampling-", subsampling_value, ".pdf"),
-         width=9, height=6.5)
+  if (K==6){
+    saveFigure(p.combined, file=paste0(file_prefix, "Figure1_k", K, "-subsampling-", subsampling_value),
+               width=9, height=6.5)
+  }
+  if (K==4){
+    saveFigure(p.combined, file=paste0(file_prefix, "FigureS1_k", K, "-subsampling-", subsampling_value),
+               width=9, height=6.5)
+  }
+  
   
   # Write results
   N.genomes = length(unique(summary.df$genome))
@@ -367,16 +330,16 @@ runModelMakePlot <- function(subsampling_value, K){
   rownames(results.table) = c("Intercept", "Category (relative to core): Non-core", "Category (relative to core): Plasmid")
   colnames(results.table) = c("Mean estimate","Lower (95% CI)", "Upper (95%)", "Effective sample size", "pMCMC" )
   variance.explained =    
-  variance.explained = c(mVarF_accessory/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100,
-                         mVarF_plasmid/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100,
-                         mean_random_effects/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100)
+    variance.explained = c(mVarF_accessory/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100,
+                           mVarF_plasmid/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100,
+                           mean_random_effects/(mVarF_accessory+mVarF_plasmid+mRandomF) * 100)
   names(variance.explained) = c("Non-core", "Plasmid",
-                                "Phylogenetic structure", "Species-level", "No. of genomes", "Residuals")
+                                "Phylogeny", "No. of genomes", "Residuals")
   
   header.string = c(K, subsampling_value, N.genomes, N.species)
   names(header.string) = c("K", "Subsampling (bp)", "No. of genomes", "No. of species (n>=3 genomes)")
   
-  output_file = paste0(outputDir, Sys.Date(), "-K-", K, "-subsampling-", subsampling_value, ".tsv")
+  output_file = paste0(outputDir, file_prefix, "_", Sys.Date(), "-K-", K, "-subsampling-", subsampling_value, ".tsv")
   write.table(header.string, file=output_file, append=FALSE, 
               quote=F, col.names =F, sep="\t")
   write.table("\nModel output", file=output_file, append = TRUE, 
@@ -389,105 +352,3 @@ runModelMakePlot <- function(subsampling_value, K){
   
   return(df.sum) 
 }
-
-
-mean.10000.k6 = runModelMakePlot(subsampling_value  = "10000", K=6)
-mean.50000.k6 = runModelMakePlot(subsampling_value = "50000", K=6)
-mean.100000.k6 = runModelMakePlot(subsampling_value = "100000", K=6)
-
-mean.10000.k4 = runModelMakePlot(subsampling_value  = "10000", K=4)
-mean.50000.k4  = runModelMakePlot(subsampling_value = "50000", K=4)
-mean.100000.k4 = runModelMakePlot(subsampling_value = "100000", K=4)
-
-
-corr.df = data.frame(species=mean.50000.k6$species,
-                     k6.plasmid=mean.50000.k6$p, 
-                    k6.core=mean.50000.k6$c,
-                    k4.plasmid=mean.50000.k4$p, 
-                    k4.core=mean.50000.k4$c)
-p.corr.2 = ggplot(corr.df, aes(k4.plasmid, k6.plasmid))+
-  geom_point()+
-  xlab("Plasmid avoidance (k=4)")+
-  ylab("Plasmid avoidance (k=6)")+
-  ggtitle("(b) Plasmid genes")+
-  theme_bw()+
-  geom_hline(yintercept = 0, linetype='dashed')+
-    geom_vline(xintercept = 0, linetype='dashed')+
-  ggrepel::geom_text_repel(aes(label=species), size=2 )
-
-p.corr.1 = ggplot(corr.df, aes(k4.core, k6.core))+
-  geom_point()+
-  xlab("Core avoidance (k=4)")+
-  ylab("Core avoidance (k=6)")+
-    ggtitle("(a) Core genes")+
-  theme_bw()+
-    geom_hline(yintercept = 0, linetype='dashed')+
-    geom_vline(xintercept = 0, linetype='dashed')+
-    ggrepel::geom_text_repel(aes(label=species), size=2)
-p.corr = cowplot::plot_grid(p.corr.1, p.corr.2, nrow=1)
-
-ggsave(p.corr, file=paste0(figureDir, Sys.Date(), "-correlation-plasmid-corr.pdf"), width=9, height=6.5)
-
-```
-
-```{r variation_in_plasmids}
-summaryDF = function(subsampling_value, K){
-  main.df = get(paste0("main.df.", K))
-  
-  df = summariseDFpalindromeCoreAccessory(subsampling_value, K)
-  df.plasmid = summariseDFpalindromeCorePlasmid(subsampling_value, K)
-  df.plasmid.accessory = summariseDFpalindromeCorePlasmidAccessory(subsampling_value, K)
-  summary.df <- main.df[which(main.df$subsampling==subsampling_value & main.df$score!="NaN" &
-                                main.df$kmer_category=="Palindromic" & 
-                                main.df$section %in% c("accessory_plas", "core", "accessory_chrom")),] %>% 
-    group_by(genome, species, kmer_category) %>% 
-    summarise(n=length(section),
-              score_diff=score[section=="accessory_plas"]-score[section=="core"],
-              plasmid_score=score[section=="accessory_plas"],
-              chrom_score=score[section=="core"],
-              accessory_score=score[section=="accessory_chrom"]) %>%
-    filter(n==3) 
-  #summary.df$animal <- summary.df$species
-  # make into a data frame, with a numeric variable for kmer_category
-  summary.df$kmer_category_ordinal <- as.numeric(summary.df$kmer_category)
-  summary.df <- as.data.frame(summary.df)
-  
-  # Abundant species
-  species.counts = table(summary.df$species)
-  include.species = names(species.counts)[species.counts>N.MIN]
-  
-  # Remove non-abundant species from what follows
-  summary.df = summary.df[which(summary.df$species %in% include.species),]
-  return(summary.df)
-}
-
-summary.df.4 = summaryDF("50000", "4")
-summary.df.6 = summaryDF("50000", "6")
-
-# Summarise plasmid variation
-summary.df.6.sd = summary.df.6 %>% 
-  group_by(species) %>% 
-  summarise(Plasmid=sd(plasmid_score)**2, Core=sd(chrom_score)**2, `Non-core`=sd(accessory_score)**2) %>%
-  pivot_longer(cols=c("Plasmid", "Core", "Non-core"), names_to="component")
-summary.df.6.sd$species = gsub("_", " ", summary.df.6.sd$species)
-p.6.variation = ggplot(summary.df.6.sd, aes(component, value, colour=component))+
-  geom_quasirandom()+
-  scale_colour_manual(values=component.colours)+
-  theme_bw()+
-  theme(panel.grid = element_blank())+
-  ylab("Within-species variation")+
-  theme(legend.position = "none")+
-  xlab("")+
-  theme(axis.text=element_text(colour="black"))+
-      ggsignif::geom_signif(colour="black", test="wilcox.test", test.args=list(paired=TRUE),
-                          comparisons=list(c("Core", "Plasmid"),
-                                           c("Non-core", "Plasmid")),
-                          step=0.1, 
-                          textsize=3.5)+
-  theme(axis.title.y=element_text(size=18),
-        axis.text.y=element_text(size=14),
-        axis.text.x=element_text(size=14),
-        panel.border = element_rect(size=2))
-ggsave(p.6.variation, file=paste0(figureDir, Sys.Date(), "-variation-pangenome-components.pdf"), width=4, height=4)
-```
-

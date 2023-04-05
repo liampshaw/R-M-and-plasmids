@@ -1,57 +1,6 @@
----
-title: "Trees and heatmaps"
-author: "Liam Shaw"
-date: "`r Sys.Date()`"
-output: 
-  html_document:
-  fig_width: 12
-fig_height: 8
-editor_options: 
-  chunk_output_type: console
----
+# "Trees and heatmaps"
 
-
-  
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8,
-                      echo=TRUE, warning=FALSE, message=FALSE,
-                      tidy=TRUE)
-options(stringsAsFactors = FALSE)
-dataDir = "../data/" # assumes being run from 'notebooks' dir
-figureDir = "../output-figures/" # for figures
-outputDir = "../output-data/" # for output data
-
-# Pangenome component colours
-component.colours = c("#1f78b4", "#a6cee3", "#b2df8a")
-names(component.colours) = c("Core", "Non-core", "Plasmid")
-```
-
-## Libraries
-
-```{r libraries, include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(formatR)
-library(ape)
-library(ggtree)
-library(ggridges)
-library(MCMCglmm)
-library(phytools)
-library(reshape2)
-library(tidyr)
-library(ggrepel)
-```
-
-```{r analysis}
-# Plot of distribution of targets
-
-# Tree with metadata
-# and R-M targets on
-require(ape)
-require(ggtree)
-require(ggplot2)
-
+source('setup.R')
 
 
 plotHeatmap <- function(K){
@@ -59,7 +8,7 @@ plotHeatmap <- function(K){
   # Database of k-mer presence/absence
   db.6mers = read.csv(paste0(dataDir, K, '-kmer-db.csv'),
                       header=T, row.names = 1)
-  db.6mers = db.6mers[,zhu.tree$tip.label]
+  db.6mers = db.6mers[,species.tree$tip.label]
   
   db.6mers.nonzero = t(db.6mers[which(rowSums(db.6mers)!=0),])
   db.hclust = hclust(dist(t(db.6mers.nonzero)))
@@ -72,12 +21,12 @@ plotHeatmap <- function(K){
   #db.6mers.nonzero.rel.counts = apply(db.6mers.nonzero.rel.counts, MARGIN=1:2,
   #                                    function(x) ifelse(x==1, "unique", ifelse(x!=0, "common", "absent")))
   
-  zhu.tree$tip.label = gsub("_", " ", zhu.tree$tip.label)
+  species.tree$tip.label = gsub("_", " ", species.tree$tip.label)
   
   rownames(db.6mers.nonzero) = gsub("_", " ", rownames(db.6mers.nonzero))
   #db.6mers.nonzero.rel.counts
-  p = ggtree(zhu.tree)+
-    geom_tiplab(align = TRUE, size=0.9, linesize = 0.1,fontface=3 )
+  p = ggtree(species.tree)+
+    geom_tiplab(align = TRUE, size=0.9, linesize = 0.1,fontface=3 , linetype=NULL)
   g <- gheatmap(p,
                 db.6mers.nonzero, 
                 colnames_angle=90, 
@@ -93,22 +42,22 @@ plotHeatmap <- function(K){
 }
 
 
-  zhu.tree <- read.tree(paste0(dataDir, 'zhu-tree-subset-v2.nwk'))
+species.tree <- read.tree(paste0(dataDir, '16S_species.nwk'))
 
 db.4mers = read.csv(paste0(dataDir, '4-kmer-db.csv'),
                     header=T, row.names = 1)
-db.4mers = db.4mers[,zhu.tree$tip.label]
+db.4mers = db.4mers[,species.tree$tip.label]
 db.4mers.nonzero = t(db.4mers[which(rowSums(db.4mers)!=0),])
 
 
 db.5mers =  read.csv(paste0(dataDir, '5-kmer-db.csv'),
                      header=T, row.names = 1)
-db.5mers = db.5mers[,zhu.tree$tip.label]
+db.5mers = db.5mers[,species.tree$tip.label]
 db.5mers.nonzero = t(db.5mers[which(rowSums(db.5mers)!=0),])
 
 db.6mers =  read.csv(paste0(dataDir, '6-kmer-db.csv'),
                      header=T, row.names = 1)
-db.6mers = db.6mers[,zhu.tree$tip.label]
+db.6mers = db.6mers[,species.tree$tip.label]
 db.6mers.nonzero = t(db.6mers[which(rowSums(db.6mers)!=0),])
 
 #db.palindromes = rbind(db.4mers[palindromes.4,],db.6mers[palindromes,])
@@ -130,17 +79,17 @@ p.heatmap.5 = heatmap.5+ggtitle("k=5")
 p.heatmap.6 = heatmap.6+ggtitle("k=6")
 
 
-p.tree = ggtree(zhu.tree)+
-    geom_tiplab(align = TRUE, size=0.9, linesize = 0.1,fontface=3 )+
+p.tree = ggtree(species.tree)+
+    geom_tiplab(align = TRUE, size=0.9, linesize = 0.1,fontface=3, linetype = NULL)+
   xlim(c(0,1.5))
 
-ggsave(p.tree, 
-       file=paste0(figureDir, Sys.Date(), '-zhu-tree.pdf'), width=8, height=4)
+saveFigure(p.tree, 
+       'FigureS3_species-tree', width=8, height=4)
 
-ggsave(p.heatmap.4, 
-       file=paste0(figureDir, Sys.Date(), '-heatmap-k4.pdf'), width=8, height=4)
-ggsave(p.heatmap.5, 
-       file=paste0(figureDir, Sys.Date(), '-heatmap-k5.pdf'), width=8, height=4)
-ggsave(p.heatmap.6, 
-       file=paste0(figureDir, Sys.Date(), '-heatmap-k6.pdf'), width=8, height=4)
+saveFigure(p.heatmap.4, 
+  'FigureS4_heatmap-k4-targets', width=8, height=4)
+saveFigure(p.heatmap.5, 
+       'FigureS5_heatmap-k5-targets', width=8, height=4)
+saveFigure(p.heatmap.6, 
+       'FigureS6_heatmap-k6-targets', width=8, height=4)
 
