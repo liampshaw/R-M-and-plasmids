@@ -1,3 +1,4 @@
 .Rhistory
 .DS_Store
 data/*
+output-figures/20*pdf
