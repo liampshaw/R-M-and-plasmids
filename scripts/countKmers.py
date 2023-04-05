@@ -1,5 +1,5 @@
 from itertools import product
-
+import all_palindromes as ap
 import argparse
 
 # Using Matthew Fahrbach solution from Rosalind problem 
@@ -30,6 +30,8 @@ def get_seq(input_fasta):
 
 def count_kmers(fasta, k):
     dna = get_seq(fasta)
+    rev_comp_dna = ap.reverse_complement(dna)
+    dna = dna+"Z"+rev_comp_dna
     table = {};
     for kmer in product('ACGT', repeat=k):
         table[''.join(kmer)] = 0
