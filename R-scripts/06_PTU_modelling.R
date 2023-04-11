@@ -254,13 +254,13 @@ ggsave(plot=p.6, "Figure5_PTU-modelling-size-effect-10k-k6.png",
 
 p.4 = makePlotEffectsErrorBars("10000", 4,
                                TITLE="")
-saveFigure(p.4, 'FigureS9_PTU-modelling-size-effect-10k-k4', 
+saveFigure(p.4, 'FigureS10_PTU-modelling-size-effect-10k-k4', 
        width=10, height=4)
 ggsave(plot=p.4, file=paste0(figureDir, Sys.Date(), 'FigureS9_PTU-modelling-size-effect-10k-k4.png'), 
        width=25, height=8, unit="cm", dpi=300)
 p.5 = makePlotEffectsErrorBars("10000", 5,
                                TITLE="")
-saveFigure(p.5, "FigureS10_PTU-modelling-size-effect-10k-k5", 
+saveFigure(p.5, "FigureS11_PTU-modelling-size-effect-10k-k5", 
        width=10, height=4)
 ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), "FigureS10_PTU-modelling-size-effect-10k-k5.png"), 
        width=25, height=8, unit="cm", dpi=300)
@@ -269,7 +269,7 @@ ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), "FigureS10_PTU-modelling-siz
 
 
 # INVESTIGATE MTASES
-MTase_hits = read.csv(paste0(dataDir, '2022-11-14-MTases-redondo-salvo-plasmids.csv'),
+MTase_hits = read.csv(paste0(dataDir, 'rmsFinder_plasmids_MT_results.csv'),
                       header=T, stringsAsFactors = F)
 MTase_hits$plasmid = gsub(".[0-9]_.*", "\\1\\2", MTase_hits$qseqid)
 MTase_hits$length.target = nchar(MTase_hits$target)
@@ -281,6 +281,30 @@ MTase_hits_filtered = MTase_hits %>% filter(coverage_threshold_met=="True",
 # Get list of targets
 summary.targets = MTase_hits_filtered %>% group_by(plasmid) %>%
   summarise(targets=paste(unique(target)))
+
+# Also check if they have an RM system that recognises the same target
+RM_systems = read.csv(paste0(dataDir, 'rmsFinder_plasmids_RMS.csv'),
+                      header=T, stringsAsFactors = F)
+  RM_systems$plasmid = gsub(".[0-9]_.*", "\\1\\2", RM_systems$prot_MT)
+RM_systems$length.target = nchar(RM_systems$sequence)
+# How many carry an R-M system?
+print("Plasmids carrying a putative R-M system:")
+length(table(RM_systems$plasmid))
+# And how big are these plasmids?
+median(plasmid_db[unique(RM_systems$plasmid),"Size"])
+
+
+RM_systems$plasmid_and_target = paste(RM_systems$plasmid, RM_systems$sequence)
+MTase_hits_filtered$plasmid_and_target = paste(MTase_hits_filtered$plasmid, MTase_hits_filtered$target)
+
+
+print("How many plasmids carrying MTase also have a putative R-M system with the same predicted target?")
+table(MTase_hits_filtered$plasmid_and_target %in% RM_systems$plasmid_and_target)
+
+# We can exclude these further:
+MTase_hits_filtered = MTase_hits_filtered[which(! MTase_hits_filtered$plasmid %in% RM_systems$plasmid),]
+
+# Should we check that they recognise the same target?
 
 
 # Just 4-6bp targets? not for now
@@ -338,13 +362,22 @@ plasmid_db_modelling = plasmid_db_modelling[!is.na(plasmid_db_modelling$hostrang
 glm_model_all = glm(MTase ~ log10(Size)+hostrange.numeric, data=plasmid_db_modelling, family = "binomial")
 glm_model_PTU = glm(MT ~ log10(size)+hostrange.numeric, data=PTU_summary)
 glm_model_PTU_diversity = glm(targets ~ log10(size)+hostrange.numeric, data=PTU_summary)
-
+af <- summary(aov(glm_model_PTU))[[1]]
+afss = af$"Sum Sq"
+print("Summary of aov of glm_model_PTU")
+modelling.results.PTU = cbind(af,PctExp=afss/sum(afss)*100)
+print(modelling.results.PTU)
+write.csv(file=paste0(outputDir, "TableSX_results_for_GLM_PTU_all.csv"), modelling.results.PTU)
 
 # Larger than 100kb
 glm_model_all_100kb = glm(MTase ~ log10(Size)+hostrange.numeric, data=plasmid_db_modelling[which(plasmid_db_modelling$Size>100000),], family = "binomial")
 glm_model_PTU_100kb = glm(MT ~ log10(size)+hostrange.numeric, data=PTU_summary[which(PTU_summary$size>100000),], family = "gaussian")
-
-
+af <- summary(aov(glm_model_PTU_100kb))[[1]]
+afss = af$"Sum Sq"
+print("Summary of aov of glm_model_PTU_100kb")
+modelling.results.PTU.100kb = cbind(af,PctExp=afss/sum(afss)*100)
+print(modelling.results.PTU.100kb)
+write.csv(file=paste0(outputDir, "TableSX_results_for_GLM_PTU_100kb.csv"), modelling.results.PTU.100kb)
 #lm_model_MT_norm_all = lm(MT.norm ~ log10(size)+hostrange.numeric, data=PTU_summary)
 
 # exponential to get the predictions 0-1
@@ -482,7 +515,7 @@ p.norm = ggplot(PTU_summary, aes(group=hostrange, x=hostrange, y=MT.norm+0.5e-6,
 p.combined = cowplot::plot_grid(p.prop+ggtitle("(a)")+theme(legend.position = "none"), 
                                 p.norm+ggtitle("(b)")+theme(legend.position = "none"), 
                                 align='h', axis='t', nrow=2)
-saveFigure(p.combined, "FigureS11_PTUs-MTase-combined",
+saveFigure(p.combined, "FigureS12_PTUs-MTase-combined",
        width=8, height=6)
 
 #ggsave(plot=p.prop, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-host-range-density.pdf"),
@@ -523,4 +556,3 @@ p.heatmap = ggplot(summary.df, aes(PTU.hostrange, new_bin, fill=mean))+
  saveFigure(p.heatmap, "Figure6_MTase-heatmap.pdf",
        width=7.5, height=4)
 
- 

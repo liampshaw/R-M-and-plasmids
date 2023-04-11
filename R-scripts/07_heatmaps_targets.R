@@ -79,12 +79,14 @@ p.heatmap.5 = heatmap.5+ggtitle("k=5")
 p.heatmap.6 = heatmap.6+ggtitle("k=6")
 
 
+species.tree$tip.label = gsub("_", " ", species.tree$tip.label)
 p.tree = ggtree(species.tree)+
-    geom_tiplab(align = TRUE, size=0.9, linesize = 0.1,fontface=3, linetype = NULL)+
-  xlim(c(0,1.5))
+    geom_tiplab(align = TRUE, size=0.9, linesize = 0.1,fontface=3, linetype=NULL)+
+  xlim(c(0,0.5))+
+  geom_treescale(width=0.1, x = 0, y=-2)
 
 saveFigure(p.tree, 
-       'FigureS3_species-tree', width=8, height=4)
+       'FigureS3_species-tree', width=5, height=4)
 
 saveFigure(p.heatmap.4, 
   'FigureS4_heatmap-k4-targets', width=8, height=4)
