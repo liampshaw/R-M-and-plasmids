@@ -2,3 +2,5 @@
 .DS_Store
 data/*
 output-figures/20*pdf
+*/__pycache__/*
+old/*
