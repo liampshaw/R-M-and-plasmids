@@ -7,12 +7,15 @@ figureDir = "../output-figures/" # for figures
 outputDir = "../output-data/" # for output data
 
 # SAVE FIGURE FUNCTION
-saveFigure = function(some.ggplot, filename, width, height, with.date=TRUE, dpi=600){
+saveFigure = function(some.ggplot, filename, width, height, with.date=FALSE, dpi=600, caption=""){
   if (with.date==TRUE){
     ggsave(some.ggplot, file=paste0(figureDir, filename, "-", Sys.Date(), ".pdf"), width=width, height=height, dpi=dpi)
   }
   if (with.date==FALSE){
-    ggsave(some.ggplot, file=paste0(figureDir, filename, ".pdf"), width=width, height=height, dpi=dpi)
+    ggsave(some.ggplot+
+             labs(caption=str_wrap(caption, 100))+
+             theme(plot.caption.position = "plot",plot.caption = element_text(hjust = 0)), 
+           file=paste0(figureDir, filename, ".pdf"), width=width, height=height, dpi=dpi)
   }
 }
 
@@ -37,4 +40,5 @@ suppressPackageStartupMessages(library(ggtree))
 suppressPackageStartupMessages(library(phytools))
 suppressPackageStartupMessages(library(reshape2))
 suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(tidyverse))
 print("Done!")

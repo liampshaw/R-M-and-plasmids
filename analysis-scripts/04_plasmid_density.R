@@ -3,19 +3,27 @@ source('setup.R')
 
 # LOAD DATA
 print("Loading data")
-counts_4mers = read.csv(paste0(dataDir, '4mer_occurrences_plasmids.csv'), sep=' ', header=T)
-normalising = rowSums(counts_4mers)
-counts_4mers_normalised = counts_4mers/normalising
+# NOTE: these kmer counts are for both the forward and the reverse strand
+# of the sequences analysed. This means that to normalise them appropriatley
+# to compare to the theoretical expectation, we use a factor of 2 times the length
+counts_4mers = read.csv(paste0(dataDir, '4mer_results.csv'), 
+                        sep=' ', header=T, row.names = 1)
+normalising = (counts_4mers$length-4+1)
+counts_4mers$length = NULL
+counts_4mers_normalised = counts_4mers/(2*normalising)
+
+counts_5mers = read.csv(paste0(dataDir, '5mer_results.csv'), 
+                        sep=' ', header=T, row.names = 1)
+normalising = (counts_5mers$length-5+1)
+counts_5mers$length = NULL
+counts_5mers_normalised = counts_5mers/(2*normalising)
 
 
-counts_5mers = read.csv(paste0(dataDir, '5mer_occurrences_plasmids.csv'), sep=' ', header=T)
-normalising = rowSums(counts_5mers)
-counts_5mers_normalised = counts_5mers/normalising
-
-
-counts_6mers = read.csv(paste0(dataDir, '6mer_occurrences_plasmids.csv'), sep=' ', header=T)
-normalising = rowSums(counts_6mers)
-counts_6mers_normalised = counts_6mers/normalising
+counts_6mers = read.csv(paste0(dataDir, '6mer_results.csv'), 
+                        sep=' ', header=T, row.names = 1)
+normalising = (counts_6mers$length-4+1)
+counts_6mers$length = NULL
+counts_6mers_normalised = counts_6mers/(2*normalising)
 
 
 
@@ -240,9 +248,9 @@ geom_quasirandom(width=0.25)+    theme_bw()+
           axis.line = element_line(colour = "black"), 
           axis.text=element_text(colour="black"))+
     xlab("Plasmid size (kb)")+
-    ylab("Mean target density (per bp)")+
+    ylab("Mean palindrome density (per bp)")+
     theme(axis.title=element_text(face="plain"))+
-    theme(legend.position = "none")+ggsignif::geom_signif(comparisons=list( c("<10", ">100")),step=0.05,textsize = 2, colour="black")
+    theme(legend.position = "none")+ggsignif::geom_signif(comparisons=list( c("<10", ">100")),step=0.05,textsize = 2, colour="black", test = "wilcox.test")
 
 saveFigure(p.palindromes.4, "Figure3_palindrome-version-k-4",
        width=9, height=6.5)
@@ -268,8 +276,20 @@ geom_quasirandom(width=0.25)+    theme_bw()+
           axis.line = element_line(colour = "black"), 
           axis.text=element_text(colour="black"))+
     xlab("Plasmid size (kb)")+
-    ylab("Mean target density (per bp)")+
+    ylab("Mean palindrome density (per bp)")+
     theme(axis.title=element_text(face="plain"))+
-    theme(legend.position = "none")+ggsignif::geom_signif(comparisons=list( c("<10", ">100")),step=0.05,textsize = 2, colour="black")
-saveFigure(p.palindromes.6, "Figure3_palindrome-version-k6.pdf",
+    theme(legend.position = "none")+ggsignif::geom_signif(comparisons=list( c("<10", ">100")),step=0.05,textsize = 2, colour="black", test = "wilcox.test")
+saveFigure(p.palindromes.6, "Figure3_palindrome-version-k6",
        width=9, height=6.5)
+
+p.palindromes.combined = cowplot::plot_grid(p.palindromes.4+ggtitle("(a) k=4"),
+                                            p.palindromes.6+ggtitle("(b) k=6"))
+saveFigure(p.palindromes.combined, "FigureS9_palindrome-density",
+           width=9, height=4)
+
+# What about those small plasmids with high mean densities?
+df.6$species = gsub("\\..*", "", df.6$genome)
+sort(table(df.6[which(df.6$size<10000 & df.6$median.score>2e-4),"species"]))
+# They are mostly from Klebsiella pneumoniae and Escherichia coli
+df.6[which(df.6$size<10000 & df.6$median.score>2e-4 & df.6$species=="KlPn"),]
+

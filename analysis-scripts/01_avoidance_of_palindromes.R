@@ -40,7 +40,7 @@ p.corr.1 = ggplot(corr.df, aes(k4.core, k6.core))+
     ggrepel::geom_text_repel(aes(label=species), size=2)
 p.corr = cowplot::plot_grid(p.corr.1, p.corr.2, nrow=1)
 
-saveFigure(p.corr, file=paste0("FigureS2_correlation-plasmid-corr"), width=9, height=6.5)
+saveFigure(p.corr, file=paste0("FigureS3_correlation-plasmid-corr"), width=9, height=6.5)
 
 # VARIATION IN PLASMIDS (subplot of Figure 1) 
 summaryDF = function(subsampling_value, K){

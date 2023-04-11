@@ -94,7 +94,7 @@ p.all.PTUs.palindromic = ggplot(ptu.df.plot.palindromic, aes(hostrange, score, c
         axis.line=element_line(colour="black"))+
   scale_colour_manual(values=c("grey", RColorBrewer::brewer.pal(6, "Set2")))+
   theme(legend.position = "none")
-saveFigure(p.all.PTUs.palindromic, "Figure4a_ptus-palindromic-k6-hostrange", width=5.5, height=4)
+saveFigure(p.all.PTUs.palindromic, "Figure4_ptus-palindromic-k6-hostrange", width=5.5, height=4)
 
 
 # Compute a statistical test of correlation
@@ -165,7 +165,7 @@ p.all.PTUs.palindromic = ggplot(ptu.df.plot.palindromic, aes(hostrange, score, c
         axis.line=element_line(colour="black"))+
   scale_colour_manual(values=c("grey", RColorBrewer::brewer.pal(6, "Set2")))+
   theme(legend.position = "none")
-saveFigure(p.all.PTUs.palindromic, "FigureX_ptus-palindromic-k4-hostrange", width=5.5, height=4)
+saveFigure(p.all.PTUs.palindromic, "FigureS11_ptus-palindromic-k4-hostrange", width=5.5, height=4)
 
 ptu.df.plot.palindromic = ptu.df.plot.palindromic %>%   mutate(new_bin = cut(log10(size), 
                                                                              breaks=c(2, 3, 4, 4.39794, 4.69897, 5, 10),

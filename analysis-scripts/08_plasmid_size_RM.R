@@ -133,10 +133,5 @@ p.mean.bases.plasmid = ggplot(plasmid.by.species, aes(mean.rms.unique.target.per
   xlab("Mean R-M systems per genome (unique targets)")
 p.combined = cowplot::plot_grid(p.mean.rms.per.genome+ggtitle("(a)"),
                    p.mean.bases.plasmid+ggtitle("(b)"))
-saveFigure(p.combined, "FigureS9", width=10, height=5)
-pggplot(plasmid.by.species, aes(mean.rms.per.genome, mean))+
-  geom_point()+
-  scale_y_log10()
-ggplot(plasmid.by.species, aes(mean.rms.per.genome, median))+
-  geom_point()+
-  scale_y_log10()
+saveFigure(p.combined, "FigureS10", width=10, height=5)
+

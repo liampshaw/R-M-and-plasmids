@@ -316,7 +316,7 @@ runModelMakePlot <- function(subsampling_value, K, file_prefix=""){
                width=9, height=6.5)
   }
   if (K==4){
-    saveFigure(p.combined, file=paste0(file_prefix, "FigureS1_k", K, "-subsampling-", subsampling_value),
+    saveFigure(p.combined, file=paste0(file_prefix, "FigureS2_k", K, "-subsampling-", subsampling_value),
                width=9, height=6.5)
   }
   

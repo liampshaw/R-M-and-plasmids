@@ -86,7 +86,7 @@ p.tree = ggtree(species.tree)+
   geom_treescale(width=0.1, x = 0, y=-2)
 
 saveFigure(p.tree, 
-       'FigureS3_species-tree', width=5, height=4)
+       'FigureS1_species-tree', width=6, height=5)
 
 saveFigure(p.heatmap.4, 
   'FigureS4_heatmap-k4-targets', width=8, height=4)

@@ -254,15 +254,15 @@ ggsave(plot=p.6, "Figure5_PTU-modelling-size-effect-10k-k6.png",
 
 p.4 = makePlotEffectsErrorBars("10000", 4,
                                TITLE="")
-saveFigure(p.4, 'FigureS10_PTU-modelling-size-effect-10k-k4', 
+saveFigure(p.4, 'FigureS12_PTU-modelling-size-effect-10k-k4', 
        width=10, height=4)
-ggsave(plot=p.4, file=paste0(figureDir, Sys.Date(), 'FigureS9_PTU-modelling-size-effect-10k-k4.png'), 
+ggsave(plot=p.4, file=paste0(figureDir, Sys.Date(), 'FigureS12_PTU-modelling-size-effect-10k-k4.png'), 
        width=25, height=8, unit="cm", dpi=300)
 p.5 = makePlotEffectsErrorBars("10000", 5,
                                TITLE="")
-saveFigure(p.5, "FigureS11_PTU-modelling-size-effect-10k-k5", 
+saveFigure(p.5, "FigureS13_PTU-modelling-size-effect-10k-k5", 
        width=10, height=4)
-ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), "FigureS10_PTU-modelling-size-effect-10k-k5.png"), 
+ggsave(plot=p.5, file=paste0(figureDir, Sys.Date(), "FigureS13_PTU-modelling-size-effect-10k-k5.png"), 
        width=25, height=8, unit="cm", dpi=300)
 
 
@@ -515,7 +515,7 @@ p.norm = ggplot(PTU_summary, aes(group=hostrange, x=hostrange, y=MT.norm+0.5e-6,
 p.combined = cowplot::plot_grid(p.prop+ggtitle("(a)")+theme(legend.position = "none"), 
                                 p.norm+ggtitle("(b)")+theme(legend.position = "none"), 
                                 align='h', axis='t', nrow=2)
-saveFigure(p.combined, "FigureS12_PTUs-MTase-combined",
+saveFigure(p.combined, "FigureS14_PTUs-MTase-combined",
        width=8, height=6)
 
 #ggsave(plot=p.prop, filename=paste0(figureDir, Sys.Date(), "-fig-PTUs-host-range-density.pdf"),

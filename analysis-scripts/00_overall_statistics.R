@@ -43,6 +43,34 @@ contigs.db = read.csv(paste0(dataDir, "2022-11-18-contig-database.csv"),
 # STATISTICS OF R-M SYSTEMS
 rms.db = read.csv(paste0(dataDir, "2023-04-06-rms-db.csv"))
 rms.db$genome = gsub("\\.[0-9][0-9][0-9][0-9]$", "", rms.db$contig)
+rms.db$species = gsub("\\..*", "", rms.db$genome)
+rms.db$type = ifelse(gsub(".*\\.", "", rms.db$contig)=="0001", 
+                     "chromosome", "plasmid")
+print("R-M system carriage on chromosome vs. plasmid:")
+table(rms.db$type)
+
+species.names = read.csv(paste0(dataDir, "species.csv"), header=F, stringsAsFactors = F)
+species.long = species.names$V1
+names(species.long) = species.names$V2
+rms.db$species = species.long[rms.db$species]
+
+# Write species and sequence occurrences
+write.csv(rms.db[,c("species", "sequence")], 
+          file=paste0(dataDir, "species-motifs.csv"),
+          quote=F,
+          row.names = F)
+
+  
+write.csv(rms.db[,c("species", "sequence")], 
+          file=paste0(dataDir, "species-motifs.csv"),
+          quote=F,
+          row.names = F)
+# Can then run compute-motifs.py in data-generation-scripts to 
+# get the unambiguous base numbers for Table 1
+
+# Write summary
+rms.db.summary = rms.db %>% group_by(sequence) %>% 
+  summarise(n=length(species))
   
 # Total systems (non-unique)
 print("Total putative R-M systems:") 
@@ -60,9 +88,10 @@ genome.counts = table(rms.db$genome)
 genome.counts[genome.counts>20]
 
 # To avoid overlapping systems, we summarise by genome and unique targets
-genomes.and.unique.targets = rms.db %>% group_by(genome) %>% 
+genomes.and.unique.targets = rms.db %>% group_by(genome, species) %>% 
   summarise(targets=length(unique(sequence)),
             total.putative.systems=length(sequence))
+
 
 table(genomes.and.unique.targets$targets>1)
 table(genomes.and.unique.targets$targets)
@@ -77,3 +106,38 @@ as.character(genomes.and.unique.targets[genomes.and.unique.targets$targets>9,"ge
 # per genome. Of the R-M-containing genomes, 1,875/2,592 (72.3%) had R-M systems 
 # recognising one motif (range: 0-18 putative R-M systems; Helicobacter pylori 
 # genomes accounted for all those with >9 R-M systems). 
+
+# Number of species
+print("Species without any R-M systems:")
+cat(species.long[!species.long %in% unique(genomes.and.unique.targets$species)], 
+    sep=", ")
+
+# Unique motifs
+print("Number of unique motifs:")
+length(unique(rms.db$sequence))
+
+# Summarise for Table 1
+rms.db$length.of.target = nchar(rms.db$sequence)
+print("(most of) Table 1 in manuscript:")
+rms.db %>% group_by(length.of.target) %>%
+  summarise(rebase.motifs=length(unique(sequence)),
+            genomes=length(unique(genome)),
+            species=length(unique(species)))
+
+
+# Write to file 
+cat(unique(rms.db$sequence), sep="\n", file="../data/rms-motifs.txt")
+
+# Targeting by species level
+motifs.by.species = rms.db %>% group_by(sequence) %>% 
+  summarise(species=length(unique(species)),
+            genomes=length(unique(genome)))
+print("Motifs targeted by only a single species:")
+table(motifs.by.species$species==1)
+print("Median, range for number of species targeting motif:")
+median(motifs.by.species$species)
+range(motifs.by.species$species)
+print("Median, range for number of genomes targeting motif:")
+median(motifs.by.species$genomes)
+range(motifs.by.species$genomes)
+
