@@ -8,15 +8,15 @@ Restriction-modification systems have shaped the evolution and distribution of p
 Liam P. Shaw, Eduardo P. C. Rocha, R. Craig MacLean. **biorxiv**  
 doi: [10.1101/2022.12.15.520556v1](https://www.biorxiv.org/content/10.1101/2022.12.15.520556v1) 
 
-Data files are large and stored externally at figshare, and should be downloaded into a `data` directory in this directory to run notebooks: [10.6084/m9.figshare.21923121.v1](https://doi.org/10.6084/m9.figshare.21923121.v1)
+The `data-generation-scripts` contains python scripts that were used in a cluster environment to generate the intermediate data needed for the main analysis e.g. exceptionality scores for all k-mers across all genomes at multiple subsampling sizes. The resulting data files are large and stored externally at figshare, and should be downloaded into a `data` directory in this directory to run notebooks: [10.6084/m9.figshare.21923121.v1](https://doi.org/10.6084/m9.figshare.21923121.v1)
 
-By default, all output files (tables and figures) will be date-stamped with the date they are run on e.g. `output-figures/2023-03-29-{file_name}.pdf`.
+The `analysis-scripts` folder contains R scripts to generate output figures and tables in the manuscript. These can be run with `./run_all.sh` which should take about 15 minutes on a standard laptop.
 
-This can be run with `./run_all.sh` which should take about 15 minutes on a standard laptop.
+By default, all output files (tables and figures) will be date-stamped with the date they are run on e.g. `output-figures/{file_name}-{date}.pdf`.
 
 ## Data generation
 
-The data generated that is available via figshare was generated on a computing cluster. The scripts in `scripts` are not designed to be used by others. However, it should be possible to use parts of them, and to understand the basic approach that we use. 
+The data generated that is available via figshare was generated on a computing cluster. The scripts in `data-generation-scripts` were not designed to be used by others, and the data they generate is provided on figshare. However, it should be possible to inspect them to understand the basic approach that we use, and to use and adapt sections of them for your own analysis. 
 
 First, we download all of the genomes for a species from NCBI with `ncbi-genus-download`. Then, we run our analyses. 
 
@@ -31,16 +31,6 @@ This generates both exceptionality scores for every k-mer and putative R-M syste
 
 We then need to combine these together to understand how avoidance of k-mers correlates with R-M system presence across bacterial taxonomy. `calculateAvoidanceKmerGroupsAcrossDatasetv2.py` was used to combine the datasets together and create a 'dictionary' of k-mer targets for each value of k. This dictionary is then used to calculate the median avoidance of different subsets of k-mers for different taxonomic levels and subsamplings. 
 
-# Correspondence with manuscript
+## Analysis scripts
 
-The correspondence between the manuscript and the notebooks is as follows:
-* `01_avoidance_of_palindromes.Rmd` - Avoidance of 6-bp palindromes is stronger in plasmid genes than in core genes. 
-
-| Item 	| File names 	| Notes 	|
-|---	|---	|---	|
-| Figure 1 	| `figure-1-k6-subsampling-50000.pdf`  and  `variation-pangenome-components.pdf` 	|  	|
-| Figure 2 	|  	|  	|
-| Figure 3  | `escherichia-coli-plasmids.pdf` (a, b) and   `plasmid-boxplots.pdf` (c, d, e). But now `2023-04-04-plasmid-boxplots-figure-3.pdf`         |  `04_plasmid_density.Rmd`     | 
-| Figure 4 	| `ptus-palindromic.pdf` 	| In `05_plasmid_host_range.R` 	|
-| Figure 5 	|  	|  	|
-| Figure 6 	| | |  
+We conduct all downstream analysis in R. Scripts in `analysis-scripts` will produce all figures (including supplementary) and tables in the manuscript. 
