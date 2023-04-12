@@ -249,8 +249,8 @@ p.6 = makePlotEffectsErrorBars("10000", 6,
 
 saveFigure(p.6, "Figure5_PTU-modelling-size-effect-10k-k6", 
        width=10, height=4)
-ggsave(plot=p.6, "Figure5_PTU-modelling-size-effect-10k-k6.png", 
-       width=25, height=8, unit="cm", dpi=300)
+#ggsave(plot=p.6, "Figure5_PTU-modelling-size-effect-10k-k6.png", 
+#       width=25, height=8, unit="cm", dpi=300)
 
 p.4 = makePlotEffectsErrorBars("10000", 4,
                                TITLE="")
