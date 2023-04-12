@@ -33,7 +33,7 @@ We then need to combine these together to understand how avoidance of k-mers cor
 
 ## Analysis scripts
 
-We conduct all downstream analysis in R. Scripts in `analysis-scripts` will produce all figures (including supplementary) and tables in the manuscript. To find the code related to a particular figure, consult the list below. Note that some figures were processed in Inkscape for formatting before inclusion in the final paper. 
+We conduct all downstream analysis in R. Scripts in `analysis-scripts` will produce all figures (including supplementary) and tables in the manuscript. Figures are written to `output-figures` and tables to `output-data`. To find the code related to a particular figure, consult the list below. Note that some figures were processed in Inkscape for formatting before inclusion in the final paper. Some additional figures (`FigureX_`) are produced in `output-figures` - these are not included in the manuscript.  
 
 ```
 01_avoidance_of_palindromes.R
