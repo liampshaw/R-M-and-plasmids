@@ -4,3 +4,4 @@ data/*
 output-figures/20*pdf
 */__pycache__/*
 old/*
+supplementary-data/*

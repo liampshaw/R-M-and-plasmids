@@ -1,21 +1,24 @@
-import generateKmerTargetDB as gk
+import generateKmerTargetDBlevels as gk
 
 print('motif,length,ambiguity,n.genomes,n.species,species')
 
 species_dict = {}
-with open('/well/shaw/users/amu125/projects/restriction-sites/db-outputs/species-motifs.csv', 'r') as f:
-	for line in f.readlines():
+with open('../data/species-motifs.csv', 'r') as f:
+	for i, line in enumerate(f.readlines()):
+		if i==0:
+			continue
 		species, motif = line.strip().split(',')
 		if motif in species_dict.keys():
 			species_dict[motif].append(species)
 		else:
 			species_dict[motif] = [species] 
 
-with open('/well/shaw/users/amu125/projects/restriction-sites/db-outputs/motif-counts.csv', 'r') as f:
-	for line in f.readlines():
-		count, motif = line.strip().split(',')
-		motif_length = len(motif)	
-		ambiguity_count = len(gk.possibleSequences(motif))
-		species_count = len(species_dict[motif])
-		species_list = '-'.join(species_dict[motif])
-		print(motif+','+str(motif_length)+','+str(ambiguity_count)+','+str(count)+','+str(species_count)+','+species_list)
+# dict of possible sequences for each k
+possible_sequences = {4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+
+for motif in species_dict.keys():
+	possible_sequences[len(motif)] += len(gk.possibleSequences(motif))
+
+print(possible_sequences)
+
+
