@@ -339,7 +339,7 @@ runModelMakePlot <- function(subsampling_value, K, file_prefix=""){
   header.string = c(K, subsampling_value, N.genomes, N.species)
   names(header.string) = c("K", "Subsampling (bp)", "No. of genomes", "No. of species (n>=3 genomes)")
   
-  output_file = paste0(outputDir, file_prefix, "_", Sys.Date(), "-K-", K, "-subsampling-", subsampling_value, ".tsv")
+  output_file = paste0(outputDir, "K-", K, "-subsampling-", subsampling_value, ".tsv")
   write.table(header.string, file=output_file, append=FALSE, 
               quote=F, col.names =F, sep="\t")
   write.table("\nModel output", file=output_file, append = TRUE, 

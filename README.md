@@ -33,4 +33,40 @@ We then need to combine these together to understand how avoidance of k-mers cor
 
 ## Analysis scripts
 
-We conduct all downstream analysis in R. Scripts in `analysis-scripts` will produce all figures (including supplementary) and tables in the manuscript. 
+We conduct all downstream analysis in R. Scripts in `analysis-scripts` will produce all figures (including supplementary) and tables in the manuscript. To find the code related to a particular figure, consult this list:
+
+```
+01_avoidance_of_palindromes.R
+Figure1
+FigureS2
+FigureS3
+
+02_heatmaps_targets.R
+FigureS1
+FigureS4
+FigureS5
+FigureS6
+
+03_RM_targets.R
+Figure2 
+FigureS7
+FigureS8
+
+04_plasmid_density.R
+Figure3
+FigureS9
+
+05_plasmid_size_RM.R
+FigureS10
+
+06_plasmid_host_range.R
+Figure4
+FigureS11
+
+07_PTU_modelling.R
+Figure5
+Figure6
+FigureS12
+FigureS13
+FigureS14
+```

@@ -9,4 +9,4 @@ EXCLUDE = c("Vibrio_parahaemolyticus",
 main.df.4 = main.df.4[which(! main.df.4$species %in% EXCLUDE),]
 main.df.6 = main.df.6[which(! main.df.6$species %in% EXCLUDE),]
 
-mean.50000.k6 = runModelMakePlot(subsampling_value = "50000", K=6, file_prefix="FigureS12_exclude-reanalysis")
+mean.50000.k6 = runModelMakePlot(subsampling_value = "50000", K=6, file_prefix="FigureSX_exclude-reanalysis")

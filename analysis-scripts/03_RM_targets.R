@@ -45,7 +45,7 @@ summary.df.all.6 <- main.df[which(main.df$subsampling==SUBSAMPLING & main.df$sco
             rank=mean(rank))
 
 # SCORE PLOT FUNCTION
-scorePlot <- function(df, panel.one=FALSE, legend.position="none"){
+scorePlot <- function(df, panel.one=FALSE, legend.position="none", type="a"){
   p.panel = ggplot(df[,], aes(kmer_category, score, group=interaction(section, species)))+
     geom_hline(yintercept = 0, linetype='dashed', colour='black', size=1)+
     geom_line(alpha=0.2, aes(colour=section), size=0.5)+
@@ -70,9 +70,17 @@ scorePlot <- function(df, panel.one=FALSE, legend.position="none"){
     theme(axis.text.x=element_text(angle=45, hjust=1))+
     theme(legend.position = "none")
   
-  p.l = cowplot::plot_grid(p.all+ggtitle("(d)"), p.panel+ggtitle("(e)"), nrow=1, 
+  if (type=="a"){
+      p.l = cowplot::plot_grid(p.all+ggtitle("(a)"), p.panel+ggtitle("(b)"), nrow=1, 
                            rel_widths = c(1, 0.4),
                            align='h', axis='b')
+  }
+  if (type!="a"){
+    p.l = cowplot::plot_grid(p.all+ggtitle("(d)"), p.panel+ggtitle("(e)"), nrow=1,
+                           rel_widths = c(1, 0.4),
+                           align='h', axis='b')
+
+}
   if (panel.one==TRUE){
     return(p.all+theme(legend.position = legend.position))
   }
@@ -84,7 +92,7 @@ scorePlot <- function(df, panel.one=FALSE, legend.position="none"){
 # SCORE PLOTS, SMOOTHED COMPONENTS
 p.scores.4 = scorePlot(summary.df.all.4)
 p.scores.5 = scorePlot(summary.df.all.5)
-p.scores.6 = scorePlot(summary.df.all.6)
+p.scores.6 = scorePlot(summary.df.all.6, type="d")
 
 # Save figures
 saveFigure(p.scores.4, 'FigureS7_smoothed-component-K-4', width=6, height=6)
